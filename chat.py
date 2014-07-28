@@ -1,29 +1,51 @@
 from twilio.rest import TwilioRestClient
 import imaplib
 import email
-import ConfigParser
+from ConfigParser import SafeConfigParser
 from pprint import pprint
+import time
+from HTMLParser import HTMLParser
 
 parser = SafeConfigParser()
 parser.read('/Users/wjimenez/Desktop/igchat.ini')
 
 twilio_account = parser.get('twilio', 'account')
 twilio_token = parser.get('twilio', 'token')
+twilio_phone_number =  parser.get('twilio', 'phone_number')
 imap_host = parser.get('imap', 'host')
 imap_user = parser.get('imap', 'user')
 imap_pass = parser.get('imap', 'pass')
 imap_port = parser.get('imap', 'port')
 
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
+#TODO post to facebook
+#TODO post to instagram
 
 def SendSMS(message):
-    try:
-        client = TwilioRestClient(account, token)
-        message = client.messages.create(to="", from_="",
-                                         body=message) % message
-    except:
-        raise Exception('Error Sending SMS')
+    print("%s: Sending SMS" % time.ctime())
+    client = TwilioRestClient(twilio_account, twilio_token)
+    client.messages.create(
+        to="16502418470",
+        from_=twilio_phone_number,
+        body=message,
+    )
+
 
 def archiveEmail(server, emailid):
+    print("%s:Archiving Email %s" % (time.ctime(), emailid))
     print server.copy(emailid,'INBOX.PROCESSED')
     print server.store(emailid, '+FLAGS', '\\DELETED')
     print server.expunge()
@@ -55,34 +77,43 @@ def getEmail():
     server = imaplib.IMAP4_SSL(imap_host, port=imap_port)
     server.login(imap_user, imap_pass)
 
+    print("%s: Checking for mail on %s" % (time.ctime(), imap_host))
     #mboxes = server.list()[1]
     r = server.select("INBOX")
 
     r, data = server.search(None, "(To ignitechat@willjimenez.com)")
     if data ==['']:
-        exit(0)
+        print "nothing to process!"
+    else:
+        if data == None:
+            print 'none'
+        data = data[0].split(' ')
+        msgid = data[0]
+        r, data = server.fetch(msgid, '(RFC822)')
+        mail = email.message_from_string(data[0][1])
 
-    if data == None:
-        print 'none'
-    data = data[0].split(' ')
-    msgid = data[0]
-    r, data = server.fetch(msgid, '(RFC822)')
-    mail = email.message_from_string(data[0][1])
+        for part in mail.walk():
+            if part.get_content_maintype() == 'multipart':
+                continue
+            if part.get_content_subtype() != 'plain':
+                continue
+        payload = part.get_payload()
 
-    for part in mail.walk():
-        if part.get_content_maintype() == 'multipart':
-            continue
-        if part.get_content_subtype() != 'plain':
-            continue
-    payload = part.get_payload()
-    print payload
-    archiveEmail(server, msgid)
-    server.LOGOUT()
+        payload = strip_tags(payload)
+        print payload
+        archiveEmail(server, msgid)
+        server.LOGOUT()
 
-    #pprint((data))
-    #pprint(type(data))
-    #print data[0][1]
 
-getEmail()
+        SendSMS(payload)
+
+
+if __name__ == "__main__":
+    run = True
+    while run is True:
+        getEmail()
+        time.sleep(300)
+
+
 
 
