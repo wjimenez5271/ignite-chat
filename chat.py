@@ -5,11 +5,10 @@ from ConfigParser import SafeConfigParser
 from pprint import pprint
 import time
 from HTMLParser import HTMLParser
-import rethinkdb as r
 import datetime
 import sys
 from email.parser import HeaderParser
-
+import db
 
 parser = SafeConfigParser()
 if not len(sys.argv) == 1:
@@ -47,23 +46,7 @@ def strip_tags(html):
     return s.get_data()
 
 #TODO post to facebook
-#TODO post to instagram
 
-def db_connect():
-    r.connect("localhost", 28015, db='ignitechat').repl()
-
-def db_get_phonenumber(phone_number):
-    db_connect()
-    results = list(r.table("sms_subscribers").get_all(phone_number, index="number").run())
-    if results == []:
-        return False
-    else:
-        print results[0]
-        return True
-
-def db_set_phonenumber(phone_number, msid):
-    db_connect()
-    r.table('sms_subscribers').insert([{'number':phone_number, 'subscription_msid': msid }]).run()
 
 def send_sms(message):
     """
@@ -72,7 +55,7 @@ def send_sms(message):
     :return: None
     """
     client = TwilioRestClient(twilio_account, twilio_token)
-    db_connect()
+    db.db_connect()
     cursor = r.table("sms_subscribers").run()
     for document in cursor:
         print type(document)
