@@ -5,13 +5,12 @@ from ConfigParser import SafeConfigParser
 from pprint import pprint
 import time
 from HTMLParser import HTMLParser
+import rethinkdb as r
 import datetime
 import sys
-from email.parser import HeaderParser
-import db
 
 parser = SafeConfigParser()
-if not len(sys.argv) == 1:
+if sys.argv:
     parser.read(sys.argv[1])
 else:
     parser.read('/Users/wjimenez/Desktop/igchat.ini')
@@ -27,6 +26,8 @@ imap_user = parser.get('imap', 'user')
 imap_pass = parser.get('imap', 'pass')
 imap_port = parser.get('imap', 'port')
 
+def db_connect():
+    r.connect( "localhost", 28015, db='ignitechat').repl()
 
 class MLStripper(HTMLParser):
     def __init__(self):
@@ -37,25 +38,19 @@ class MLStripper(HTMLParser):
     def get_data(self):
         return ''.join(self.fed)
 
+
 def strip_tags(html):
-    """
-    Remove HTML tags
-    """
     s = MLStripper()
     s.feed(html)
     return s.get_data()
 
 #TODO post to facebook
+#TODO post to instagram
 
 
-def send_sms(message):
-    """
-    Call SMS API sending message payload
-    :param message: message to send to SMS API
-    :return: None
-    """
+def SendSMS(message):
     client = TwilioRestClient(twilio_account, twilio_token)
-    db.db_connect()
+    db_connect()
     cursor = r.table("sms_subscribers").run()
     for document in cursor:
         print type(document)
@@ -68,20 +63,14 @@ def send_sms(message):
     print("%s: Sending SMS" % time.ctime())
 
 
-def archive_email(server, emailid):
-    """
-    Move email to archive mailbox
-    :param server: IMAP server object
-    :param emailid: IMAP ID of msg to archive
-    :return: None
-    """
+def archiveEmail(server, emailid):
     print("%s:Archiving Email %s" % (time.ctime(), emailid))
     print server.copy(emailid,'INBOX.PROCESSED')
     print server.store(emailid, '+FLAGS', '\\DELETED')
     print server.expunge()
 
 
-def parse_email(data):
+def parseEmail(data):
     print data
     d = []
     l = False
@@ -105,18 +94,15 @@ def parse_email(data):
     return s
 
 
-def get_email():
-    """
-    Make IMAP Connection and check for new messages
-    :return:
-    """
+def getEmail():
     server = imaplib.IMAP4_SSL(imap_host, port=imap_port)
     server.login(imap_user, imap_pass)
 
     print("%s: Checking for mail on %s" % (time.ctime(), imap_host))
-    mbox = server.select("INBOX")
+    #mboxes = server.list()[1]
+    r = server.select("INBOX")
 
-    mbox, data = server.search(None, "(To %s)" % receiving_email)
+    r, data = server.search(None, "(To %s)" % receiving_email)
     if data ==['']:
         print "nothing to process!"
     else:
@@ -124,7 +110,7 @@ def get_email():
             print 'none'
         data = data[0].split(' ')
         msgid = data[0]
-        mbox, data = server.fetch(msgid, '(RFC822)')
+        r, data = server.fetch(msgid, '(RFC822)')
         mail = email.message_from_string(data[0][1])
 
         for part in mail.walk():
@@ -133,16 +119,15 @@ def get_email():
             if part.get_content_subtype() != 'plain':
                 continue
         payload = part.get_payload()
+
         payload = strip_tags(payload)
-        header = HeaderParser().parsestr(data[0][1])
-        subject = header['Subject']
-        print "Received Message. Subject: '%s' . Contents: '%s'" % (subject, payload)
-        archive_email(server, msgid)
-        send_sms("[Ignitechat]: %s - %s" % (subject, payload))
+        print "Received Message. Contents: "+payload
+        archiveEmail(server, msgid)
         server.LOGOUT()
+        SendSMS(payload)
 
 
-def sms_window():
+def SMS_window():
     """
     Check if its within the allowed time range to send SMS messages. Return True if it is, otherwise False.
     :return: Boolean
@@ -152,13 +137,12 @@ def sms_window():
     else:
         return False
 
-
 if __name__ == "__main__":
     c0 = 0
     run = True
     while run is True:
-        if sms_window():
-            get_email()
+        if SMS_window():
+            getEmail()
         else:
             if c0 == 0:
                 print "Currently not processing"
