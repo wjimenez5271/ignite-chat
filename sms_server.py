@@ -1,8 +1,8 @@
 from flask import Flask, request, redirect
+import argparse
 import twilio.twiml
 import db
 import logging
-import sys
 
 app = Flask(__name__)
 
@@ -54,6 +54,16 @@ def setup_logging(loglevel, logfile):
                           "%(levelname)s - %(message)s")
 
 if __name__ == "__main__":
-    setup_logging('DEBUG', sys.argv[1])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--loglevel', help='logging level', type=str, default='INFO')
+    parser.add_argument('--logfile', help='path to write logfile to', type=str, default='sms-server.log')
+    args = parser.parse_args()
+
+    setup_logging(args.loglevel, args.logfile)
     logging.info('Starting server')
-    app.run(debug=True, host='0.0.0.0')
+    if args.loglevel.upper() == 'DEBUG':
+        floglevel=True
+    else:
+        floglevel=False
+
+    app.run(debug=floglevel, host='0.0.0.0')
