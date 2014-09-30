@@ -14,20 +14,29 @@ def receive_sms():
     message_sid = request.values.get('MessageSid', None)
 
     if "unsubscribe" in message_body.lower():
-        db.db_remove_phonenumber(int(from_number))
-        message = "Your phone number has been removed"
-        logging.info('Phone number {} removed from db'.format(from_number))
+        try:
+            db.db_remove_phonenumber(int(from_number))
+            message = "Your phone number has been removed"
+            logging.info('Phone number {} removed from db'.format(from_number))
+        except Exception as e:
+            logging.error('Exception removing phone number {} from db: {}'.format(from_number, e))
     elif "subscribe" in message_body.lower():  # if not check to see if subscribe is in body
-        if db.db_get_phonenumber(int(from_number)):  # check if number is already in db
-            message = "This number is currently subscribed to ignite chat"
-            logging.info('Phone number {} already in DB'.format(from_number))
+        try:
+            if db.db_get_phonenumber(int(from_number)):  # check if number is already in db
+                message = "This number is currently subscribed to ignite chat"
+                logging.info('Phone number {} already in DB'.format(from_number))
+        except Exception as e:
+            logging.error('Exception looking up phone number {} in db: {}'.format(from_number, e))
         else:
-            db.db_set_phonenumber(int(from_number), message_sid)  # if subscribe is in body add to db
-            message = "You've been subscribed to Ignite Chat"
-            logging.info('Phone number {} added to DB'.format(from_number))
+            try:
+                db.db_set_phonenumber(int(from_number), message_sid)  # if subscribe is in body add to db
+                message = "You've been subscribed to Ignite Chat"
+                logging.info('Phone number {} added to DB'.format(from_number))
+            except Exception as e:
+                logging.error('Exception inserting phone number {} into db: {}'.format(from_number, e))
     else:  # if not reply with help message
         pass
-        message = "To subscribe, reply with 'subscribe'"
+        message = "To subscribe, reply with 'subscribe'. To unsubscribe, reply 'unsubscribe'"
 
     resp = twilio.twiml.Response()
     resp.message(message)
