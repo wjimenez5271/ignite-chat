@@ -1,7 +1,8 @@
 from flask import Flask, request, redirect
 import argparse
 import twilio.twiml
-import db
+import db_json as db
+import s3_sync
 import logging
 
 app = Flask(__name__)
@@ -60,6 +61,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     setup_logging(args.loglevel, args.logfile)
+    logging.info('loading latest db for S3')
+    s3_sync.get_data('db.json')
     logging.info('Starting server')
     if args.loglevel.upper() == 'DEBUG':
         floglevel=True
