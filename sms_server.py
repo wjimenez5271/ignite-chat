@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     setup_logging(args.loglevel, args.logfile)
     logging.info('loading latest db for S3')
-    s3_sync.get_data('db.json')
+    s3_sync.get_data()
     logging.info('Starting server')
     if args.loglevel.upper() == 'DEBUG':
         floglevel=True
