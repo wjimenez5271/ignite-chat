@@ -2,10 +2,9 @@ from twilio.rest import TwilioRestClient
 import imaplib
 import email
 from ConfigParser import SafeConfigParser
-from pprint import pprint
 import time
+import db_json as db
 from HTMLParser import HTMLParser
-import rethinkdb as r
 import datetime
 import sys
 from os import path
@@ -29,8 +28,6 @@ imap_pass = parser.get('imap', 'pass')
 imap_port = parser.get('imap', 'port')
 
 
-def db_connect():
-    r.connect( "localhost", 28015, db='ignitechat').repl()
 
 class MLStripper(HTMLParser):
     def __init__(self):
@@ -55,16 +52,12 @@ def SendSMS(message):
     # truncate message length to 1599 characters to comply with Twilio limits
     message = message[:1598]
     client = TwilioRestClient(twilio_account, twilio_token)
-    db_connect()
-    cursor = r.table("sms_subscribers").run()
-    for document in cursor:
-        print type(document)
-        print document
-        print document['number']
+    for subscriber in db.db_list_all_subscribers():
         client.messages.create(
-            to=document['number'],
+            to=subscriber['number'],
             from_=twilio_phone_number,
-            body=message,)
+            body=message
+        )
     print("%s: Sending SMS" % time.ctime())
 
 
