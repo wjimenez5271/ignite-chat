@@ -20,7 +20,7 @@ k.key = 'db.json'
 
 def get_data():
     logger.info('Fetching data from S3')
-    with open(json_file, 'rb') as f:
+    with open(json_file, 'wb') as f:
         k.get_contents_to_file(f)
 
 
