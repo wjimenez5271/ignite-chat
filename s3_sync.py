@@ -2,7 +2,7 @@ from boto.s3.key import Key
 from boto.s3.connection import S3Connection
 import logging
 
-logger = logging.getlogger(__name__)
+logger = logging.getLogger(__name__)
 
 bucket_name = 'ignite_chat_data'
 conn = S3Connection()
