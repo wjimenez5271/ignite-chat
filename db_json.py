@@ -1,6 +1,12 @@
 import json
+from ConfigParser import SafeConfigParser
+from os import path
 
-json_db_file = 'db.json'
+
+parser = SafeConfigParser()
+parser.read(path.join(path.expanduser('~'), '.ignite_chat.ini'))
+
+json_db_file = parser.get('main', 'json_db_path')
 
 try:
     with open(json_db_file, 'rb') as f:

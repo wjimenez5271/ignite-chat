@@ -6,10 +6,9 @@ import time
 import db_json as db
 from HTMLParser import HTMLParser
 import datetime
-import sys
 from os import path
 
-parser = SafeConfigParser()
+parser = ConfigParser.SafeConfigParser()
 parser.read(path.join(path.expanduser('~'), '.ignite_chat.ini'))
 
 receiving_email = parser.get('main', 'receiving_email')
