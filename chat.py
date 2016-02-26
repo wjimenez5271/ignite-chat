@@ -1,7 +1,7 @@
 from twilio.rest import TwilioRestClient
 import imaplib
 import email
-from ConfigParser import SafeConfigParser
+import ConfigParser
 import time
 import db_json as db
 from HTMLParser import HTMLParser
@@ -15,7 +15,10 @@ parser.read(path.join(path.expanduser('~'), '.ignite_chat.ini'))
 receiving_email = parser.get('main', 'receiving_email')
 sms_window_start = parser.get('main', 'sms_window_start')
 sms_window_end = parser.get('main', 'sms_window_end')
-sms_header = parser.get('main', 'sms_header')
+try:
+    sms_header = parser.get('main', 'sms_header')
+except ConfigParser.NoOptionError:
+    sms_header = ""
 twilio_account = parser.get('twilio', 'account')
 twilio_token = parser.get('twilio', 'token')
 twilio_phone_number =  parser.get('twilio', 'phone_number')
