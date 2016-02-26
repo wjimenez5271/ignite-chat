@@ -16,7 +16,7 @@ conn = S3Connection()
 
 bucket = conn.get_bucket(bucket_name)
 k = Key(bucket)
-k.key = 'db_json'
+k.key = 'db.son'
 
 def get_data():
     logger.info('Fetching data from S3')
