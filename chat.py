@@ -10,10 +10,7 @@ import sys
 from os import path
 
 parser = SafeConfigParser()
-if sys.argv:
-    parser.read(sys.argv[1])
-else:
-    parser.read(path.join(path.expanduser('~'), '.ignite_chat.ini'))
+parser.read(path.join(path.expanduser('~'), '.ignite_chat.ini'))
 
 receiving_email = parser.get('main', 'receiving_email')
 sms_window_start = parser.get('main', 'sms_window_start')
