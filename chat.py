@@ -53,7 +53,7 @@ def SendSMS(message):
     client = TwilioRestClient(twilio_account, twilio_token)
     for subscriber in db.db_list_all_subscribers():
         client.messages.create(
-            to=subscriber['number'],
+            to=subscriber[0],
             from_=twilio_phone_number,
             body=message
         )

@@ -38,6 +38,4 @@ def db_remove_phonenumber(phone_number):
 
 def db_list_all_subscribers():
     for k,v in db['sms_subscribers'].iteritems():
-        return k,v
-
-
+        yield k,v
