@@ -13,11 +13,15 @@ parser.read(path.join(path.expanduser('~'), '.ignite_chat.ini'))
 bucket_name = parser.get('main', 's3_bucket')
 json_file = parser.get('main', 'json_db_path')
 s3_key = parser.get('main', 's3_key')
-conn = S3Connection()
+aws_access_key = parser.get('main', 'aws_access_key')
+aws_secret_access_key = parser.get('main', 'aws_secret_access_key')
+
+conn = S3Connection(aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key)
 
 bucket = conn.get_bucket(bucket_name)
 k = Key(bucket)
 k.key = s3_key
+
 
 def get_data():
     logger.info('Fetching data from S3')

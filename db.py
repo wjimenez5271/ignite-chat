@@ -1,5 +1,6 @@
 import rethinkdb as r
 
+
 def db_connect():
     r.connect("localhost", 28015, db='ignitechat').repl()
 
