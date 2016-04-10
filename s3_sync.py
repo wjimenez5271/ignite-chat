@@ -31,7 +31,8 @@ def get_data():
 
 def put_data():
     logger.info('Storing data to S3')
-    k.set_contents_from_file(json_file)
+    with open(json_file, 'rb') as f:
+        k.set_contents_from_file(f)
 
 
 if __name__ == '__main__':
